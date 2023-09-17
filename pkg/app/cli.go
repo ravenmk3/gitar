@@ -19,7 +19,7 @@ func NewCliApp() *cli.App {
 	app := &cli.App{
 		Name:        AppName,
 		Usage:       AppName,
-		Description: "Git Archive & Repository Tool",
+		Description: "Git Archive & Repo Tool",
 		Commands: []*cli.Command{
 			NewDownloadCommand(),
 		},
