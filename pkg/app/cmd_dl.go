@@ -1,8 +1,8 @@
 package app
 
 import (
+	"gitar/pkg/client"
 	"gitar/pkg/config"
-	"gitar/pkg/git"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,11 +16,11 @@ func DownloadArchive(url string) error {
 	logrus.Infof("Config: %+v", *cfg)
 
 	logrus.Infof("Git URL: %s", url)
-	gitUrl, err := git.ParseGitUrl(url)
+	repoUrl, err := client.ParseRepoUrl(url)
 	if err != nil {
 		return err
 	}
 
-	logrus.Infof("%+v", gitUrl)
+	logrus.Infof("%+v", repoUrl)
 	return err
 }

@@ -1,4 +1,4 @@
-package git
+package client
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ const (
 	GiteeHost  = "gitee.com"
 )
 
-type GitUrl struct {
+type RepoUrl struct {
 	Platform string
 	Host     string
 	Owner    string
@@ -25,15 +25,21 @@ type GitUrl struct {
 	RefName  string
 }
 
-func ParseGitUrl(url string) (*GitUrl, error) {
+type ArchiveUrl struct {
+	Platform string
+	Commit   string
+	Url      string
+}
+
+func ParseRepoUrl(url string) (*RepoUrl, error) {
 	if len(url) <= 0 {
 		return nil, errors.New("url is empty")
 	}
 	if strings.Contains(url, GithubHost) {
-		return ParseGithubUrl(url)
+		return ParseGithubRepoUrl(url)
 	}
 	if strings.Contains(url, GiteeHost) {
-		return ParseGiteeUrl(url)
+		return ParseGiteeRepoUrl(url)
 	}
 	return nil, fmt.Errorf("unsupported url %s", url)
 }
