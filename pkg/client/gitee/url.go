@@ -1,14 +1,16 @@
-package client
+package gitee
 
 import (
 	"fmt"
 	"regexp"
+
+	"gitar/pkg/client/common"
 )
 
-func ParseGiteeRepoUrl(url string) (*RepoUrl, error) {
-	info := &RepoUrl{
-		Platform: Gitee,
-		Host:     GiteeHost,
+func ParseGiteeRepoUrl(url string) (*common.RepoUrl, error) {
+	info := &common.RepoUrl{
+		Platform: Platform,
+		Host:     Host,
 	}
 
 	// SSH URL

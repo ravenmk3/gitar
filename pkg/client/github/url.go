@@ -1,14 +1,16 @@
-package client
+package github
 
 import (
 	"fmt"
 	"regexp"
+
+	"gitar/pkg/client/common"
 )
 
-func ParseGithubRepoUrl(url string) (*RepoUrl, error) {
-	info := &RepoUrl{
-		Platform: Github,
-		Host:     GithubHost,
+func ParseGithubRepoUrl(url string) (*common.RepoUrl, error) {
+	info := &common.RepoUrl{
+		Platform: Platform,
+		Host:     Host,
 	}
 
 	// SSH URL
