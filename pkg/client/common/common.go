@@ -12,8 +12,9 @@ type RepoUrl struct {
 	RefName  string
 }
 
-type ArchiveUrl struct {
+type ArchiveInfo struct {
 	Platform string
+	Name     string
 	Commit   string
 	TarUrl   string
 	ZipUrl   string

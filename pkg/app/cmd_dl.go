@@ -2,6 +2,7 @@ package app
 
 import (
 	"gitar/pkg/client"
+	"gitar/pkg/client/github"
 	"gitar/pkg/config"
 	"github.com/sirupsen/logrus"
 )
@@ -22,5 +23,8 @@ func DownloadArchive(url string) error {
 	}
 
 	logrus.Infof("%+v", repoUrl)
+
+	arc, err := github.ResolveGithubArchive(repoUrl)
+	logrus.Infof("%+v", arc)
 	return err
 }

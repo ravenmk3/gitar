@@ -1,6 +1,7 @@
 package github
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -63,4 +64,53 @@ func ParseGithubRepoUrl(url string) (*common.RepoUrl, error) {
 	}
 
 	return nil, fmt.Errorf("unsupported GitHub url %s", url)
+}
+
+func ResolveGithubArchive(url *common.RepoUrl) (*common.ArchiveInfo, error) {
+	arc := &common.ArchiveInfo{
+		Platform: Platform,
+	}
+
+	tagName := ""
+	if len(url.Release) > 0 {
+		tagName = url.Release
+	}
+	if len(url.Tag) > 0 {
+		tagName = url.Tag
+	}
+	if len(tagName) > 0 {
+		tag, err := findTag(url.Owner, url.Repo, tagName)
+		if err != nil {
+			return nil, err
+		}
+		if tag == nil {
+			return nil, errors.New("no matched tag")
+		}
+		arc.Name = tagName
+		arc.Commit = tag.Commit.SHA
+		arc.TarUrl = tag.TarBallUrl
+		arc.ZipUrl = tag.ZipBallUrl
+		return arc, nil
+	}
+
+	// TODO releases > tags > branches
+	return arc, nil
+}
+
+func findTag(owner, repo, name string) (*Tag, error) {
+	for page := 1; page < 1000; page++ {
+		tags, err := GetTags(owner, repo, page)
+		if err != nil {
+			return nil, err
+		}
+		if tags == nil || len(tags) <= 0 {
+			return nil, errors.New("no tag fetched")
+		}
+		for _, tag := range tags {
+			if tag.Name == name {
+				return &tag, nil
+			}
+		}
+	}
+	return nil, nil
 }
