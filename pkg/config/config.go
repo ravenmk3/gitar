@@ -14,10 +14,14 @@ var (
 	ErrNoConfigFileFound = errors.New("no config file found")
 )
 
+type PathsProperties struct {
+	Data string `yaml:"data"`
+	Repo string `yaml:"repo"`
+	Temp string `yaml:"temp"`
+}
+
 type ConfigProperties struct {
-	DataDir string `yaml:"data-dir"`
-	RepoDir string `yaml:"repo-dir"`
-	TempDir string `yaml:"temp-dir"`
+	Paths PathsProperties `yaml:"paths"`
 }
 
 func LoadConfig() (*ConfigProperties, error) {

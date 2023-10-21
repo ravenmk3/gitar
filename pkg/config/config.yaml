@@ -1,3 +1,4 @@
-data-dir: .data
-repo-dir: .repo
-temp-dir: .temp
+paths:
+  data: .data
+  repo: .repo
+  temp: .temp
