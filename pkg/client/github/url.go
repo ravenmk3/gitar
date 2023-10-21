@@ -66,7 +66,7 @@ func ParseGithubRepoUrl(url string) (*common.RepoUrl, error) {
 	return nil, fmt.Errorf("unsupported GitHub url %s", url)
 }
 
-func ResolveGithubArchive(url *common.RepoUrl) (*common.ArchiveInfo, error) {
+func ResolveGithubArchive(url common.RepoUrl) (*common.ArchiveInfo, error) {
 	arc := &common.ArchiveInfo{
 		Platform: Platform,
 	}
@@ -78,6 +78,7 @@ func ResolveGithubArchive(url *common.RepoUrl) (*common.ArchiveInfo, error) {
 	if len(url.Tag) > 0 {
 		tagName = url.Tag
 	}
+
 	if len(tagName) > 0 {
 		tag, err := findTag(url.Owner, url.Repo, tagName)
 		if err != nil {
@@ -86,14 +87,26 @@ func ResolveGithubArchive(url *common.RepoUrl) (*common.ArchiveInfo, error) {
 		if tag == nil {
 			return nil, errors.New("no matched tag")
 		}
+
+		// https://github.com/{owner}/{repo}/archive/refs/tags/{tag}.{format}
+		// 这里使用 Archive URL 而不使用 REST API 返回的 URL 可以得到更友好的文件名
+		arcUrl := fmt.Sprintf("https://github.com/%s/%s/archive/refs/tags/%s", url.Owner, url.Repo, tagName)
+
 		arc.Name = tagName
 		arc.Commit = tag.Commit.SHA
-		arc.TarUrl = tag.TarBallUrl
-		arc.ZipUrl = tag.ZipBallUrl
+		arc.TarUrl = arcUrl + ".tar.gz"
+		arc.ZipUrl = arcUrl + ".zip"
+		// arc.TarUrl = tag.TarBallUrl
+		// arc.ZipUrl = tag.ZipBallUrl
 		return arc, nil
 	}
 
-	// TODO releases > tags > branches
+	// releases > tags > branches
+
+	if arc.Commit == "" {
+		return nil, errors.New("no commit found")
+	}
+
 	return arc, nil
 }
 

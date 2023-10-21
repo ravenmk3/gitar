@@ -17,6 +17,7 @@ var (
 type ConfigProperties struct {
 	DataDir string `yaml:"data-dir"`
 	RepoDir string `yaml:"repo-dir"`
+	TempDir string `yaml:"temp-dir"`
 }
 
 func LoadConfig() (*ConfigProperties, error) {

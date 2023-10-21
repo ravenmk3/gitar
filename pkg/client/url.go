@@ -22,3 +22,10 @@ func ParseRepoUrl(url string) (*common.RepoUrl, error) {
 	}
 	return nil, fmt.Errorf("unsupported url %s", url)
 }
+
+func ResolveArchive(url common.RepoUrl) (*common.ArchiveInfo, error) {
+	if url.Platform == github.Platform {
+		return github.ResolveGithubArchive(url)
+	}
+	return nil, errors.New("")
+}
