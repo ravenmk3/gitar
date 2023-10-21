@@ -1,9 +1,12 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"time"
 
 	"gitar/pkg/client"
 	"gitar/pkg/config"
@@ -101,6 +104,11 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 			return err
 		}
 
+		err = os.RemoveAll(tempPath)
+		if err != nil {
+			return err
+		}
+
 		err = os.MkdirAll(destDir, os.ModePerm)
 		if err != nil {
 			return err
@@ -117,7 +125,57 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 		err = store.SetCommitDownloaded(arc.Commit)
 	}
 
-	// TODO send mail
+	if shouldSendMail {
+
+		mailed, err := store.IsCommitMailed(arc.Commit)
+		if err != nil {
+			return err
+		}
+
+		if mailed {
+			logrus.Warnf("Commit already mailed: %s", arc.Commit)
+		} else {
+			err := sendMailWithRetry(destPath, 999)
+			if err != nil {
+				return err
+			}
+
+			err = store.SetCommitMailed(arc.Commit)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	return err
+}
+
+func sendMailWithRetry(file string, maxAttempts int) error {
+	for i := 0; i < maxAttempts; i++ {
+		err := sendMail(file)
+		if err != nil {
+			logrus.Error(err)
+			time.Sleep(calcMailRetryDelay(i + 1))
+			continue
+		}
+		return nil
+	}
+	return errors.New("send mail failed")
+}
+
+func sendMail(file string) error {
+	cmd := exec.Command("filemailer", "send", "--profile=gitar", file)
+	err := cmd.Start()
+	if err != nil {
+		return err
+	}
+	return cmd.Wait()
+}
+
+func calcMailRetryDelay(num int) time.Duration {
+	delay := num * num * num
+	if delay > 7200 {
+		delay = 7200
+	}
+	return time.Second * time.Duration(delay)
 }
