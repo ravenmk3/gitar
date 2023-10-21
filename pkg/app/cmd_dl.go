@@ -115,7 +115,7 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 		}
 
 		logrus.Infof("Downloaded: %s", destPath)
-		err = os.Rename(tempXzPath, destPath)
+		err = utils.MoveFile(tempXzPath, destPath)
 		if err != nil {
 			return err
 		}
@@ -135,7 +135,9 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 		if mailed {
 			logrus.Warnf("Commit already mailed: %s", arc.Commit)
 		} else {
-			err := sendMailWithRetry(destPath, 999)
+			subject := fmt.Sprintf("%s:%s/%s.tar.xz", repoUrl.Platform, repoUrl.Owner, arc.Name)
+
+			err := sendMailWithRetry(destPath, subject, 999)
 			if err != nil {
 				return err
 			}
@@ -150,12 +152,15 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 	return err
 }
 
-func sendMailWithRetry(file string, maxAttempts int) error {
+func sendMailWithRetry(file, subject string, maxAttempts int) error {
+	logrus.Infof("Sending email")
 	for i := 0; i < maxAttempts; i++ {
-		err := sendMail(file)
+		err := sendMail(file, subject)
 		if err != nil {
 			logrus.Error(err)
-			time.Sleep(calcMailRetryDelay(i + 1))
+			delay := calcMailRetryDelay(i + 1)
+			logrus.Infof("Retry after %s", delay)
+			time.Sleep(delay)
 			continue
 		}
 		return nil
@@ -163,8 +168,9 @@ func sendMailWithRetry(file string, maxAttempts int) error {
 	return errors.New("send mail failed")
 }
 
-func sendMail(file string) error {
-	cmd := exec.Command("filemailer", "send", "--profile=gitar", file)
+func sendMail(file string, subject string) error {
+	cmd := exec.Command("filemailer", "send", "--profile=gitar", "--subject", subject, file)
+	cmd.Stdout = os.Stdout
 	err := cmd.Start()
 	if err != nil {
 		return err
