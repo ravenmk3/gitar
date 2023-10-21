@@ -1,0 +1,13 @@
+git@gitee.com:redisson/redisson.git
+https://gitee.com/redisson/redisson
+https://gitee.com/redisson/redisson/tree/master
+https://gitee.com/redisson/redisson/releases/tag/redisson-3.23.4
+
+https://github.com/spring-projects/spring-framework/archive/dab7e03c93edf32fdcb2ccae28a161be772f4862.zip
+https://github.com/spring-projects/spring-framework/archive/refs/heads/main.zip
+
+https://api.github.com/repos/redisson/redisson/tarball/redisson-3.23.4
+https://codeload.github.com/redisson/redisson/legacy.tar.gz/refs/tags/redisson-3.23.4
+
+https://github.com/redisson/redisson/archive/refs/tags/redisson-3.23.4.tar.gz
+https://codeload.github.com/redisson/redisson/tar.gz/refs/tags/redisson-3.23.4

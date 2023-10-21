@@ -25,13 +25,13 @@ func DownloadArchive(url string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("%+v", repoUrl)
+	logrus.Infof("Parsed URL: %+v", *repoUrl)
 
 	arc, err := client.ResolveArchive(*repoUrl)
 	if err != nil {
 		return err
 	}
-	logrus.Infof("%+v", arc)
+	logrus.Infof("Archive: %+v", *arc)
 
 	arcFile := fmt.Sprintf("%s.tar.gz", arc.Name)
 	destDir := filepath.Join(cfg.RepoDir, repoUrl.Platform, repoUrl.Owner, repoUrl.Repo)
