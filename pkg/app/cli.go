@@ -32,9 +32,12 @@ func NewDownloadCommand() *cli.Command {
 		Name:    "dl",
 		Aliases: []string{"download"},
 		Usage:   "Download git archive",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "mail", Aliases: []string{"m"}, Required: false, Value: false},
+		},
 		Action: func(ctx *cli.Context) error {
 			url := ctx.Args().First()
-			return DownloadArchive(url)
+			return DownloadArchive(url, ctx.Bool("mail"))
 		},
 	}
 }
