@@ -98,7 +98,7 @@ func ResolveGithubArchive(url common.RepoUrl) (*common.ArchiveInfo, error) {
 		return resolveArchiveByCommit(url)
 	}
 
-	release, err := findAnyRelease(url.Owner, url.Repo)
+	release, err := findBestRelease(url.Owner, url.Repo)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func ResolveGithubArchive(url common.RepoUrl) (*common.ArchiveInfo, error) {
 		return resolveArchiveByTag(url, release.TagName)
 	}
 
-	branch, err := findAnyWellKnownBranch(url.Owner, url.Repo)
+	branch, err := findBestBranch(url.Owner, url.Repo)
 	if err != nil {
 		return nil, err
 	}
@@ -216,6 +216,41 @@ func resolveArchiveByTag(url common.RepoUrl, tagName string) (*common.ArchiveInf
 	return validateArchive(arc)
 }
 
+func findBestBranch(owner, repo string) (*Branch, error) {
+	desired := utils.NewStringSet([]string{"master", "main", "trunk", "release", "develop"})
+	branches := []Branch{}
+
+	for page := 1; page < 1000; page++ {
+		items, err := GetBranches(owner, repo, 1)
+		if err != nil {
+			return nil, err
+		}
+		if items == nil || len(items) <= 0 {
+			break
+		}
+
+		for _, item := range items {
+			if desired.Contains(item.Name) {
+				return &item, nil
+			}
+			branches = append(branches, item)
+		}
+	}
+
+	if len(branches) <= 0 {
+		return nil, nil
+	}
+
+	for _, branch := range branches {
+		if strings.HasPrefix(branch.Name, "release/") ||
+			strings.HasPrefix(branch.Name, "release-") {
+			return &branch, nil
+		}
+	}
+
+	return &branches[0], nil
+}
+
 func findAnyWellKnownBranch(owner, repo string) (*Branch, error) {
 	desired := utils.NewStringSet([]string{"master", "main", "trunk", "release", "develop"})
 
@@ -237,6 +272,39 @@ func findAnyWellKnownBranch(owner, repo string) (*Branch, error) {
 	return nil, errors.New("no matched branch")
 }
 
+func findBestRelease(owner, repo string) (*Release, error) {
+	releases := []Release{}
+
+	for page := 1; page < 1000; page++ {
+		items, err := GetReleases(owner, repo, 1)
+		if err != nil {
+			return nil, err
+		}
+		if items == nil || len(items) <= 0 {
+			break
+		}
+
+		for _, item := range items {
+			if !item.Draft && !item.PreRelease {
+				return &item, nil
+			}
+			releases = append(releases, item)
+		}
+	}
+
+	if len(releases) <= 0 {
+		return nil, nil
+	}
+
+	for _, release := range releases {
+		if !release.PreRelease {
+			return &release, nil
+		}
+	}
+
+	return &releases[0], nil
+}
+
 func findAnyRelease(owner, repo string) (*Release, error) {
 	items, err := GetReleases(owner, repo, 1)
 	if err != nil {
@@ -246,6 +314,27 @@ func findAnyRelease(owner, repo string) (*Release, error) {
 		return nil, nil
 	}
 	return &items[0], nil
+}
+
+func findBestTag(owner, repo string) (*Tag, error) {
+	for page := 1; page < 1000; page++ {
+		items, err := GetTags(owner, repo, 1)
+		if err != nil {
+			return nil, err
+		}
+		if items == nil || len(items) <= 0 {
+			break
+		}
+
+		for _, item := range items {
+			if strings.HasPrefix(item.Name, "release/") ||
+				strings.HasPrefix(item.Name, "release-") {
+				return &item, nil
+			}
+		}
+	}
+
+	return nil, nil
 }
 
 func findBranch(owner, repo, name string) (*Branch, error) {

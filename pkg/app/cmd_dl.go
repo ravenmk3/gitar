@@ -141,6 +141,7 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 		if err != nil {
 			return err
 		}
+		logrus.Infof("Saved: %s", destPath)
 	}
 
 	if !markDownloaded {
