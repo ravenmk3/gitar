@@ -3,6 +3,7 @@ package github
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -10,7 +11,7 @@ import (
 	"gitar/pkg/utils"
 )
 
-func ParseGithubRepoUrl(url string) (*common.RepoUrl, error) {
+func ParseGithubRepoUrl(rawUrl string) (*common.RepoUrl, error) {
 	info := &common.RepoUrl{
 		Platform: Platform,
 		Host:     Host,
@@ -18,7 +19,7 @@ func ParseGithubRepoUrl(url string) (*common.RepoUrl, error) {
 
 	// SSH URL
 	re := regexp.MustCompile(`^git@github\.com:([\w\-.]+)/([\w\-.]+)\.git$`)
-	match := re.FindStringSubmatch(url)
+	match := re.FindStringSubmatch(rawUrl)
 	if match != nil {
 		info.Owner = match[1]
 		info.Repo = match[2]
@@ -27,7 +28,7 @@ func ParseGithubRepoUrl(url string) (*common.RepoUrl, error) {
 
 	// HTTPS URL
 	re = regexp.MustCompile(`^https://github\.com/([\w\-.]+)/([\w\-.]+)(?:\.git)?$`)
-	match = re.FindStringSubmatch(url)
+	match = re.FindStringSubmatch(rawUrl)
 	if match != nil {
 		info.Owner = match[1]
 		info.Repo = match[2]
@@ -35,19 +36,24 @@ func ParseGithubRepoUrl(url string) (*common.RepoUrl, error) {
 	}
 
 	// HTTPS Tag URL
-	re = regexp.MustCompile(`^https://github\.com/([\w\-.]+)/([\w\-.]+)/releases/tag/([\w\-.]+)?$`)
-	match = re.FindStringSubmatch(url)
+	re = regexp.MustCompile(`^https://github\.com/([\w\-.]+)/([\w\-.]+)/releases/tag/([\w\-.%]+)?$`)
+	match = re.FindStringSubmatch(rawUrl)
 	if match != nil {
+		tag, err := url.QueryUnescape(match[3])
+		if err != nil {
+			return nil, err
+		}
+
 		info.Owner = match[1]
 		info.Repo = match[2]
-		info.Release = match[3]
-		info.Tag = match[3]
+		info.Release = tag
+		info.Tag = tag
 		return info, nil
 	}
 
 	// HTTPS Tree of Commit URL
 	re = regexp.MustCompile(`^https://github\.com/([\w\-.]+)/([\w\-.]+)/tree/([0-9a-fA-F]{40})?$`)
-	match = re.FindStringSubmatch(url)
+	match = re.FindStringSubmatch(rawUrl)
 	if match != nil {
 		info.Owner = match[1]
 		info.Repo = match[2]
@@ -56,17 +62,21 @@ func ParseGithubRepoUrl(url string) (*common.RepoUrl, error) {
 	}
 
 	// HTTPS Tree URL
-	re = regexp.MustCompile(`^https://github\.com/([\w\-.]+)/([\w\-.]+)/tree/([\w\-.]+)?$`)
-	match = re.FindStringSubmatch(url)
+	re = regexp.MustCompile(`^https://github\.com/([\w\-.]+)/([\w\-.]+)/tree/([\w\-.%]+)?$`)
+	match = re.FindStringSubmatch(rawUrl)
 	if match != nil {
+		ref, err := url.QueryUnescape(match[3])
+		if err != nil {
+			return nil, err
+		}
 		info.Owner = match[1]
 		info.Repo = match[2]
-		info.Branch = match[3]
-		info.RefName = match[3]
+		info.Branch = ref
+		info.RefName = ref
 		return info, nil
 	}
 
-	return nil, fmt.Errorf("unsupported GitHub url %s", url)
+	return nil, fmt.Errorf("unsupported GitHub url %s", rawUrl)
 }
 
 func ResolveGithubArchive(url common.RepoUrl) (*common.ArchiveInfo, error) {
@@ -118,6 +128,7 @@ func branchToArchive(url common.RepoUrl, branch Branch) (*common.ArchiveInfo, er
 	arcUrl := fmt.Sprintf("https://github.com/%s/%s/archive/%s", url.Owner, url.Repo, branch.Commit.SHA)
 
 	arc.Name = fmt.Sprintf("%s-%s-%s", url.Repo, branch.Name, branch.Commit.SHA[:7])
+	arc.Name = strings.ReplaceAll(arc.Name, "/", "-")
 	arc.Commit = branch.Commit.SHA
 	arc.TarUrl = arcUrl + ".tar.gz"
 	arc.ZipUrl = arcUrl + ".zip"
@@ -166,6 +177,7 @@ func resolveArchiveByBranch(url common.RepoUrl) (*common.ArchiveInfo, error) {
 	arcUrl := fmt.Sprintf("https://github.com/%s/%s/archive/%s", url.Owner, url.Repo, branch.Commit.SHA)
 
 	arc.Name = fmt.Sprintf("%s-%s-%s", url.Repo, branch.Name, branch.Commit.SHA[:7])
+	arc.Name = strings.ReplaceAll(arc.Name, "/", "-")
 	arc.Commit = branch.Commit.SHA
 	arc.TarUrl = arcUrl + ".tar.gz"
 	arc.ZipUrl = arcUrl + ".zip"
@@ -196,6 +208,7 @@ func resolveArchiveByTag(url common.RepoUrl, tagName string) (*common.ArchiveInf
 	}
 
 	arc.Name = arcName
+	arc.Name = strings.ReplaceAll(arc.Name, "/", "-")
 	arc.Commit = tag.Commit.SHA
 	arc.TarUrl = arcUrl + ".tar.gz"
 	arc.ZipUrl = arcUrl + ".zip"
