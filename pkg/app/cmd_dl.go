@@ -44,7 +44,7 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 	logrus.Infof("Parsed-Branch: %s", repoUrl.Branch)
 	logrus.Infof("Parsed-Commit: %s", repoUrl.Commit)
 
-	arc, err := client.ResolveArchive(*repoUrl)
+	arc, err := client.ResolveArchive(*repoUrl, cfg.Token)
 	if err != nil {
 		return err
 	}

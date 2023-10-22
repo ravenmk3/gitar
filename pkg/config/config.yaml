@@ -2,3 +2,4 @@ paths:
   data: /data/gitar
   repo: /data/gitar
   temp: /run/gitar
+token: 0000000000

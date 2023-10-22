@@ -3,6 +3,7 @@ package app
 import (
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -33,9 +34,14 @@ func NewDownloadCommand() *cli.Command {
 		Aliases: []string{"download"},
 		Usage:   "Download git archive",
 		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "debug", Required: false, Value: false},
 			&cli.BoolFlag{Name: "mail", Aliases: []string{"m"}, Required: false, Value: false},
 		},
 		Action: func(ctx *cli.Context) error {
+			debug := ctx.Bool("debug")
+			if debug {
+				logrus.SetLevel(logrus.DebugLevel)
+			}
 			url := ctx.Args().First()
 			return DownloadArchive(url, ctx.Bool("mail"))
 		},

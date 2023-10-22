@@ -22,6 +22,7 @@ type PathsProperties struct {
 
 type ConfigProperties struct {
 	Paths PathsProperties `yaml:"paths"`
+	Token string          `yaml:"token"`
 }
 
 func LoadConfig() (*ConfigProperties, error) {
