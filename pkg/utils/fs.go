@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"io"
 	"os"
 	"runtime"
@@ -45,4 +46,15 @@ func MoveFile(srcPath, dstPath string) error {
 		return err
 	}
 	return os.RemoveAll(srcPath)
+}
+
+func GetFileSize(filename string) (int, error) {
+	info, err := os.Stat(filename)
+	if err != nil {
+		return 0, err
+	}
+	if info.IsDir() {
+		return 0, errors.New("path is a directory")
+	}
+	return int(info.Size()), nil
 }

@@ -1,4 +1,4 @@
 paths:
-  data: .data
-  repo: .repo
-  temp: .temp
+  data: /data/gitar
+  repo: /data/gitar
+  temp: /run/gitar

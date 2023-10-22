@@ -12,7 +12,7 @@ func main() {
 	logrus.SetLevel(logrus.InfoLevel)
 	logrus.SetFormatter(&logrus.TextFormatter{
 		ForceColors:   true,
-		FullTimestamp: true,
+		FullTimestamp: false,
 	})
 
 	err := app.RunCliApp()

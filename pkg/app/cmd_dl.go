@@ -17,12 +17,14 @@ import (
 
 func DownloadArchive(url string, shouldSendMail bool) error {
 	err := DoDownloadArchive(url, shouldSendMail)
-	logrus.Infof("All done")
+	if err == nil {
+		logrus.Infof("All done")
+	}
 	return err
 }
 
 func DoDownloadArchive(url string, shouldSendMail bool) error {
-	logrus.Infof("Download archive")
+	logrus.Infof("Downloading archive")
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -30,18 +32,25 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 	}
 	logrus.Infof("Config: %+v", *cfg)
 
-	logrus.Infof("Git URL: %s", url)
+	logrus.Infof("URL: %s", url)
 	repoUrl, err := client.ParseRepoUrl(url)
 	if err != nil {
 		return err
 	}
-	logrus.Infof("Parsed URL: %+v", *repoUrl)
+	logrus.Infof("Platform: %s", repoUrl.Platform)
+	logrus.Infof("Repository: %s/%s", repoUrl.Owner, repoUrl.Repo)
+	logrus.Infof("Parsed-Tag: %s", repoUrl.Tag)
+	logrus.Infof("Parsed-Branch: %s", repoUrl.Branch)
+	logrus.Infof("Parsed-Commit: %s", repoUrl.Commit)
 
 	arc, err := client.ResolveArchive(*repoUrl)
 	if err != nil {
 		return err
 	}
-	logrus.Infof("Archive: %+v", *arc)
+	logrus.Infof("Archive-Name: %s", arc.Name)
+	logrus.Infof("Archive-Commit: %s", arc.Commit)
+	logrus.Infof("Archive-Tar: %s", arc.TarUrl)
+	logrus.Infof("Archive-Zip: %s", arc.ZipUrl)
 
 	err = os.MkdirAll(cfg.Paths.Data, os.ModePerm)
 	if err != nil {
@@ -98,11 +107,25 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 			return err
 		}
 
+		gzipSize, err := utils.GetFileSize(tempPath)
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Downloaded: %s (%s)", tempFile, utils.HumanReadableSize(gzipSize))
 		logrus.Infof("Converting gzip archive to xz")
 		err = utils.Gzip2Xz(tempPath, tempXzPath)
 		if err != nil {
 			return err
 		}
+
+		xzSize, err := utils.GetFileSize(tempXzPath)
+		if err != nil {
+			return err
+		}
+		logrus.Infof("Converted: gzip (%s) => xz (%s)",
+			utils.HumanReadableSize(gzipSize),
+			utils.HumanReadableSize(xzSize))
 
 		err = os.RemoveAll(tempPath)
 		if err != nil {
@@ -114,7 +137,6 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 			return err
 		}
 
-		logrus.Infof("Downloaded: %s", destPath)
 		err = utils.MoveFile(tempXzPath, destPath)
 		if err != nil {
 			return err
