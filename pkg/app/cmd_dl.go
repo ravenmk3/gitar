@@ -11,6 +11,7 @@ import (
 	"gitar/pkg/client"
 	"gitar/pkg/config"
 	"gitar/pkg/data"
+	"gitar/pkg/fslock"
 	"gitar/pkg/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -97,6 +98,19 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 	if destExists {
 		logrus.Warnf("Already downloaded: %s", destPath)
 	} else {
+		lockFile := filepath.Join(cfg.Paths.Temp, arc.Commit+".lock")
+		lock := fslock.New(lockFile)
+		err := lock.TryLock()
+		if err != nil {
+			return err
+		}
+		defer func(lock fslock.Lock) {
+			err := lock.Unlock()
+			if err != nil {
+				logrus.Error(err)
+			}
+		}(lock)
+
 		err = os.RemoveAll(tempPath)
 		if err != nil {
 			return err
