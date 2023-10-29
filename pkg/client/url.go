@@ -8,6 +8,7 @@ import (
 	"gitar/pkg/client/common"
 	"gitar/pkg/client/gitee"
 	"gitar/pkg/client/github"
+	"gitar/pkg/config"
 )
 
 func ParseRepoUrl(url string) (*common.RepoUrl, error) {
@@ -23,9 +24,9 @@ func ParseRepoUrl(url string) (*common.RepoUrl, error) {
 	return nil, fmt.Errorf("unsupported url %s", url)
 }
 
-func ResolveArchive(url common.RepoUrl, token string) (*common.ArchiveInfo, error) {
+func ResolveArchive(url common.RepoUrl, config *config.ConfigProperties) (*common.ArchiveInfo, error) {
 	if url.Platform == github.Platform {
-		svc := github.NewGitHubService(token)
+		svc := github.NewGitHubService(config.GitHub.Token)
 		return svc.ResolveArchive(url)
 	}
 	return nil, fmt.Errorf("unsupported platform: %s", url.Platform)

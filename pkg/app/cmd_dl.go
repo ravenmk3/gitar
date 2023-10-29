@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gitar/pkg/client"
+	"gitar/pkg/client/github"
 	"gitar/pkg/config"
 	"gitar/pkg/data"
 	"gitar/pkg/fslock"
@@ -31,7 +32,7 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("Config: %+v", *cfg)
+	logrus.Infof("Paths: %+v", cfg.Paths)
 
 	logrus.Infof("URL: %s", url)
 	repoUrl, err := client.ParseRepoUrl(url)
@@ -44,7 +45,7 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 	logrus.Infof("Parsed-Branch: %s", repoUrl.Branch)
 	logrus.Infof("Parsed-Commit: %s", repoUrl.Commit)
 
-	arc, err := client.ResolveArchive(*repoUrl, cfg.Token)
+	arc, err := client.ResolveArchive(*repoUrl, cfg)
 	if err != nil {
 		return err
 	}
@@ -53,8 +54,13 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 	logrus.Infof("Archive-Tar: %s", arc.TarUrl)
 	logrus.Infof("Archive-Zip: %s", arc.ZipUrl)
 
-	err = os.MkdirAll(cfg.Paths.Data, os.ModePerm)
-	if err != nil {
+	if err = os.MkdirAll(cfg.Paths.Temp, os.ModePerm); err != nil {
+		return err
+	}
+	if err = os.MkdirAll(cfg.Paths.Data, os.ModePerm); err != nil {
+		return err
+	}
+	if err = os.MkdirAll(cfg.Paths.Repo, os.ModePerm); err != nil {
 		return err
 	}
 
@@ -64,10 +70,13 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 		return err
 	}
 
-	repoKey := fmt.Sprintf("%s:%s/%s", repoUrl.Platform, repoUrl.Owner, repoUrl.Repo)
-	err = store.SaveRepo(repoKey)
-	if err != nil {
-		return err
+	if repoUrl.Platform == github.Platform {
+		err = store.SaveGithubRepo(repoUrl.Owner, repoUrl.Repo)
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("unsupported platform: %s", repoUrl.Platform)
 	}
 
 	markDownloaded, err := store.IsCommitDownloaded(arc.Commit)

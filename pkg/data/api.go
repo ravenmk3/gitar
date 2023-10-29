@@ -7,6 +7,9 @@ type DataStore interface {
 	RepoExists(repo string) (bool, error)
 	SaveRepo(repo string) error
 
+	GithubRepoExists(owner, repo string) (bool, error)
+	SaveGithubRepo(owner, repo string) error
+
 	IsCommitDownloaded(id string) (bool, error)
 	SetCommitDownloaded(id string) error
 

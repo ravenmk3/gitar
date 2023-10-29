@@ -54,6 +54,12 @@ func (me *Sqlite3DataStore) initDatabase() error {
 		[repo] TEXT NOT NULL PRIMARY KEY
 	);
 
+	CREATE TABLE IF NOT EXISTS [github_repo] (
+		[owner] TEXT NOT NULL,
+		[repo]  TEXT NOT NULL,
+		PRIMARY KEY([owner], [repo])
+	);
+
 	CREATE TABLE IF NOT EXISTS [commit_downloaded] (
 		[id] TEXT NOT NULL PRIMARY KEY
 	);
@@ -69,9 +75,8 @@ func (me *Sqlite3DataStore) initDatabase() error {
 	return nil
 }
 
-func (me *Sqlite3DataStore) queryExists(table, field string, value any) (bool, error) {
-	cmd := fmt.Sprintf("SELECT count(*) FROM [%s] WHERE [%s] = ?;", table, field)
-	rows, err := me.db.Query(cmd, value)
+func (me *Sqlite3DataStore) queryExists(q string, args ...any) (bool, error) {
+	rows, err := me.db.Query(q, args...)
 	if err != nil {
 		return false, err
 	}
@@ -89,8 +94,13 @@ func (me *Sqlite3DataStore) queryExists(table, field string, value any) (bool, e
 	return count > 0, nil
 }
 
+func (me *Sqlite3DataStore) queryExistsByKey(table, field string, value any) (bool, error) {
+	cmd := fmt.Sprintf("SELECT count(*) FROM [%s] WHERE [%s] = ?;", table, field)
+	return me.queryExists(cmd, value)
+}
+
 func (me *Sqlite3DataStore) RepoExists(repo string) (bool, error) {
-	return me.queryExists("git_repo", "repo", repo)
+	return me.queryExistsByKey("git_repo", "repo", repo)
 }
 
 func (me *Sqlite3DataStore) SaveRepo(repo string) error {
@@ -107,8 +117,27 @@ func (me *Sqlite3DataStore) SaveRepo(repo string) error {
 	return err
 }
 
+func (me *Sqlite3DataStore) GithubRepoExists(owner, repo string) (bool, error) {
+	cmd := fmt.Sprintf("SELECT count(*) FROM [github_repo] WHERE [owner] = ? AND [repo] = ?;")
+	return me.queryExists(cmd, owner, repo)
+}
+
+func (me *Sqlite3DataStore) SaveGithubRepo(owner, repo string) error {
+	exists, err := me.GithubRepoExists(owner, repo)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	cmd := "INSERT INTO [github_repo] ([owner], [repo]) VALUES(?, ?);"
+	_, err = me.db.Exec(cmd, owner, repo)
+	return err
+}
+
 func (me *Sqlite3DataStore) IsCommitDownloaded(id string) (bool, error) {
-	return me.queryExists("commit_downloaded", "id", id)
+	return me.queryExistsByKey("commit_downloaded", "id", id)
 }
 
 func (me *Sqlite3DataStore) SetCommitDownloaded(id string) error {
@@ -118,7 +147,7 @@ func (me *Sqlite3DataStore) SetCommitDownloaded(id string) error {
 }
 
 func (me *Sqlite3DataStore) IsCommitMailed(id string) (bool, error) {
-	return me.queryExists("commit_mailed", "id", id)
+	return me.queryExistsByKey("commit_mailed", "id", id)
 }
 
 func (me *Sqlite3DataStore) SetCommitMailed(id string) error {

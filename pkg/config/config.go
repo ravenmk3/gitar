@@ -20,9 +20,13 @@ type PathsProperties struct {
 	Temp string `yaml:"temp"`
 }
 
+type GitHubProperties struct {
+	Token string `yaml:"token"`
+}
+
 type ConfigProperties struct {
-	Paths PathsProperties `yaml:"paths"`
-	Token string          `yaml:"token"`
+	Paths  PathsProperties  `yaml:"paths"`
+	GitHub GitHubProperties `yaml:"github"`
 }
 
 func LoadConfig() (*ConfigProperties, error) {
