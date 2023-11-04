@@ -27,7 +27,7 @@ func ParseRepoUrl(url string) (*common.RepoUrl, error) {
 func ResolveArchive(url common.RepoUrl, config *config.ConfigProperties) (*common.ArchiveInfo, error) {
 	if url.Platform == github.Platform {
 		svc := github.NewGitHubService(config.GitHub.Token)
-		return svc.ResolveArchive(url)
+		return common.ResolveArchiveWithRetry(url, svc, 9999)
 	}
 	return nil, fmt.Errorf("unsupported platform: %s", url.Platform)
 }

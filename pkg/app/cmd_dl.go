@@ -84,14 +84,18 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 		return err
 	}
 
-	if markDownloaded && !shouldSendMail {
-		logrus.Warnf("Commit already downloaded: %s", arc.Commit)
-		return nil
-	}
-
 	arcFile := fmt.Sprintf("%s.tar.xz", arc.Name)
 	destDir := filepath.Join(cfg.Paths.Repo, repoUrl.Platform, repoUrl.Owner, repoUrl.Repo)
 	destPath := filepath.Join(destDir, arcFile)
+
+	if markDownloaded && !shouldSendMail {
+		logrus.Warnf("Commit already downloaded: %s", arc.Commit)
+		arcSize, err := utils.GetFileSize(destPath)
+		if err == nil {
+			logrus.Infof("Archive: %s (%s)", destPath, utils.HumanReadableSize(arcSize))
+		}
+		return nil
+	}
 
 	tempFile := fmt.Sprintf("%s-%s.tar.gz", arc.Name, arc.Commit)
 	tempPath := filepath.Join(cfg.Paths.Temp, tempFile)
@@ -125,7 +129,7 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 			return err
 		}
 
-		err = utils.Aria2Download(arc.TarUrl, cfg.Paths.Temp, tempFile)
+		err = utils.Aria2Download(arc.TarUrl, cfg.Paths.Temp, tempFile, -1)
 		if err != nil {
 			return err
 		}

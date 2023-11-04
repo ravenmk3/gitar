@@ -1,15 +1,21 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 )
 
-func Aria2Download(url string, dir string, file string) error {
+func Aria2Download(url string, dir string, file string, maxTries int) error {
+	if maxTries < 0 {
+		maxTries = 99999
+	} else if maxTries < 1 {
+		maxTries = 1
+	}
 	args := []string{
 		"--dir=" + dir,
 		"--out=" + file,
-		"--max-tries=10",
+		fmt.Sprintf("--max-tries=%d", maxTries),
 		"--lowest-speed-limit=1",
 		"--user-agent=" + HttpUserAgent,
 		"--file-allocation=none",
