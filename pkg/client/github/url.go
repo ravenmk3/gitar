@@ -24,7 +24,7 @@ func ParseGithubRepoUrl(rawUrl string) (*common.RepoUrl, error) {
 	}
 
 	// HTTPS URL
-	re = regexp.MustCompile(`^https://github\.com/([\w\-.]+)/([\w\-.]+)(?:\.git)?$`)
+	re = regexp.MustCompile(`^https://github\.com/([\w\-.]+)/([\w\-.]+?)(?:/|\.git)?$`)
 	match = re.FindStringSubmatch(rawUrl)
 	if match != nil {
 		info.Owner = match[1]
