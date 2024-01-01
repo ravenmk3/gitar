@@ -129,7 +129,7 @@ func DoDownloadArchive(url string, shouldSendMail bool) error {
 			return err
 		}
 
-		err = utils.Aria2Download(arc.TarUrl, cfg.Paths.Temp, tempFile, -1)
+		err = utils.CurlDownload(arc.TarUrl, cfg.Paths.Temp, tempFile, -1)
 		if err != nil {
 			return err
 		}
